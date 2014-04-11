@@ -1,0 +1,156 @@
+<?php 
+/**
+ * @file
+ * Typetalk module file
+ */
+
+define('TYPETALK_BASE_URL', 'https://typetalk.in');
+
+/**
+ * Implement hook_help().
+ */
+function typetalk_help($path, $arg) {
+  if ($path == 'admin/help#typetalk') {
+    return t('Typetalk module provides Typetalk related functionalities');
+  }
+}
+
+/**
+ * Implements hook_oauth2_clients().
+ */
+function typetalk_oauth2_clients() {
+  $oauth2_clients['typetalk_client'] = array(
+    'token_endpoint' => TYPETALK_BASE_URL . '/oauth2/access_token',
+    'auth_flow' => 'client-credentials',
+    'client_id' => variable_get('typetalk_client_id', NULL),
+    'client_secret' => variable_get('typetalk_client_secret', NULL),
+    'scope' => 'topic.post,my',
+  );
+  return $oauth2_clients;
+}
+
+/**
+ * Implement hook_menu().
+ */
+function typetalk_menu() {
+  $items = array();
+  $items['admin/config/services/typetalk'] = array(
+    'title' => 'Typetalk',
+    'description' => 'Configuration for the Typetalk module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('typetalk_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;  
+}
+
+function typetalk_form($form, &$form_state) {
+  $form['typetalk_client_id'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('typetalk_client_id', NULL),
+    '#title' => t('Typetalk Client ID'),
+    '#description' => t('OAuth2 Client ID to access Typetalk API. You can get it from <a href="!link">here</a>.',
+      array('!link' => 'https://typetalk.in/my/develop/applications/register')),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+  $form['typetalk_client_secret'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('typetalk_client_secret', NULL),
+    '#title' => t('Typetalk Client Secret'),
+    '#description' => t('OAuth2 Client Secret to access Typetalk API. You can get it from <a href="!link">here</a>.',
+      array('!link' => 'https://typetalk.in/my/develop/applications/register')),
+    '#size' => 64,
+    '#maxlength' => 64,
+    '#required' => TRUE,
+  );  
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_action_info().
+ */
+function typetalk_action_info() {
+  return array(
+    'typetalk_notify_topic_action' => array(
+      'label' => t('Typetalk notify to topic'),
+      'type' => 'node',
+      'configurable' => TRUE,
+      'triggers' => array('node_presave', 'node_insert', 'node_update'),      
+    ),
+  );
+}
+
+
+// https://api.drupal.org/api/drupal/developer!topics!forms_api_reference.html/7#select
+function typetalk_notify_topic_action_form($context) {
+
+  $topics = array();
+
+  try{
+    $oauth2_client = oauth2_client_load('typetalk_client');
+    $access_token = $oauth2_client->getAccessToken();
+
+    $options = array(
+      'method' => 'GET',
+      'headers' => array(
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => 'Bearer ' . $access_token,
+      ),
+    );
+    $api_endpoint = TYPETALK_BASE_URL . '/api/v1/topics';
+    $result = drupal_http_request($api_endpoint, $options);
+
+    if ($result->code == 200) {
+      $data = (Array) json_decode($result->data);      
+      foreach($data['topics'] as $topic){
+        $topics[$topic->topic->id] = $topic->topic->name;
+      }
+    }
+  } catch (Exception $e) {
+  }
+
+  $form['topic'] = array(
+    '#title' => t('Topic'),
+    '#type' => 'select',
+    '#options' => $topics,
+    '#description' => t('Select topic to post when specific event is fired.'),
+    '#default_value' => isset($context['topic']) ? $context['topic'] : '',
+    '#required' => TRUE,
+  );
+  return $form;
+}
+
+function typetalk_notify_topic_action_submit($form, $form_state) {
+  return array('topic' => $form_state['values']['topic']);
+}
+
+function typetalk_notify_topic_action(&$entity, $context = array()) {
+  global $base_url;
+  
+  watchdog('typetalk', 'typetalk_notify_topic_action fired.');
+  try{
+    $oauth2_client = oauth2_client_load('typetalk_client');
+    $access_token = $oauth2_client->getAccessToken();
+
+    $options = array(
+      'method' => 'POST',
+      'data' => http_build_query(array(
+        'message' => t('"!title" is updated. see !uri', 
+          array('!title'=> $entity->title, '!uri'=> $base_url . '/?q=' .node_uri($entity)['path'],)),
+      )),
+      'headers' => array(
+        'Content-Type' => 'application/x-www-form-urlencoded',
+        'Authorization' => 'Bearer ' . $access_token,
+      ),
+    );
+    $api_endpoint = TYPETALK_BASE_URL . '/api/v1/topics/' . $context['topic'];
+    $result = drupal_http_request($api_endpoint, $options);
+
+    drupal_set_message(t('typetalk_notify_topic_action successfully completed'));
+  } catch (Exception $e) {
+    drupal_set_message(t('typetalk_notify_topic_action failed.' . $e ));
+  }
+}

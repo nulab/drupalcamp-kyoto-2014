@@ -1,0 +1,7 @@
+name = Typetalk
+description = Provides Typetalk related functions
+core = 7.x
+package = Nulab
+files[] = typetalk.module
+dependencies[] = oauth2_client
+dependencies[] = trigger
