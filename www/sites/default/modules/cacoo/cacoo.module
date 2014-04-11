@@ -1,0 +1,143 @@
+<?php 
+/**
+ * @file
+ * Cacoo module file
+ */
+
+/**
+ * Implement hook_help().
+ */
+function cacoo_help($path, $arg) {
+  if ($path == 'admin/help#cacoo') {
+    return t('Cacoo provides Cacoo related functionalities');
+  }
+}
+
+/**
+ * Implement hook_menu().
+ */
+function cacoo_menu() {
+  $items = array();
+  $items['admin/config/services/cacoo'] = array(
+    'title' => 'Cacoo',
+    'description' => 'Configuration for the Cacoo module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cacoo_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;  
+}
+
+function cacoo_form($form, &$form_state) {
+  $form['cacoo_api_key'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('cacoo_api_key', NULL),
+    '#title' => t('Cacoo API Key'),
+    '#description' => t('API Key to access Cacoo API. You can get it from <a href="!link">here</a>.',
+      array('!link' => 'https://cacoo.com/profile/api')),
+    '#size' => 40,
+    '#maxlength' => 40,
+    '#required' => TRUE,
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function cacoo_block_info() {
+  $blocks = array();
+  $blocks['cacoo_parapara_viewer'] = array(
+    'info' => t('Cacoo Parapara Viewer'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ */
+function cacoo_block_configure($delta = '') {
+  $form = array();
+  switch ($delta) {
+    case 'cacoo_parapara_viewer':
+      $form['cacoo_parapara_viewer_url'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Cacoo Diagram URL'),
+        '#size' => 60,
+        '#description' => t('The diagrams will be shown in this block'),
+        '#default_value' => variable_get('cacoo_parapara_viewer_url', NULL),
+        '#required' => TRUE,
+      );
+      break;
+  }
+  return $form;
+}
+
+
+/**
+ * Implements hook_block_save().
+ */
+function cacoo_block_save($delta = '', $edit = array()) {
+  switch ($delta) {
+    case 'cacoo_parapara_viewer':
+      variable_set('cacoo_parapara_viewer_url', $edit['cacoo_parapara_viewer_url']);
+      break;
+  }
+}
+
+
+/**
+ * Implements hook_block_view().
+ *
+ * @pararm $delta
+ *    The name of the requested block.
+ */
+function cacoo_block_view($delta = '') {
+  $block = array(
+    'subject' => '',
+    'content' => '',
+  );
+
+  switch ($delta) {
+    case 'cacoo_parapara_viewer':
+      $block['subject'] = t('Cacoo Parapara Viewer');
+      $diagram_url = variable_get('cacoo_parapara_viewer_url', NULL);
+      $api_key = variable_get('cacoo_api_key', NULL);
+      if (is_null($diagram_url) or is_null($api_key)) {
+        $block['content'] = t('Please set diagram URL and API key to show the viewer here.');
+      }else{
+        $block['content'] = array(
+          '#theme' => 'cacoo_parapara_viewer',
+          '#diagram_url' => $diagram_url,
+          '#attached' => array(
+            'js' => array(drupal_get_path('module', 'cacoo') . '/js/cacoo.js'),
+          ),
+        );
+        drupal_add_js(array(
+          'cacoo' => array(
+            'key' => $api_key,
+            'diagram' => str_replace('https://cacoo.com/diagrams/', '', $diagram_url),
+          ),
+        ), 'setting');
+      }
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function cacoo_theme($existing, $type, $theme, $path) {
+  return array(
+    'cacoo_parapara_viewer' => array(
+      'variables' => array(
+        'diagram_url' => NULL,
+      ),
+      'template' => 'cacoo-parapara-viewer',
+    ),
+  );
+}
+
