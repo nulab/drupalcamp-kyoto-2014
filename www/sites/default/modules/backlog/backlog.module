@@ -1,0 +1,146 @@
+<?php 
+/**
+ * @file
+ * Backlog module file
+ */
+
+/**
+ * Implement hook_help().
+ */
+function backlog_help($path, $arg) {
+  if ($path == 'admin/help#backlog') {
+    return t('Backlog module provides Backlog related functionalities');
+  }
+}
+
+/**
+ * Implement hook_form_alter().
+ */
+function backlog_form_alter(&$form, &$form_state, $form_id) {
+
+  if($form_id == 'contact_site_form'){
+    $form['#submit'][]= 'backlog_form_submit';
+  }
+}
+
+function backlog_form_contact_category_edit_form_alter(&$form, &$form_state, $form_id) {
+
+  $projects = array();
+
+  $options = array(
+    'backlog.getProjects' => array(),
+  );
+  $result = xmlrpc(backlog_api_server(), $options);
+  if ($result === FALSE) {
+    drupal_set_message(
+      t('Error return from xmlrpc(): Error: @errno, Message: @message',
+      array('@errno' => xmlrpc_errno(), '@message' => xmlrpc_error_msg())),
+      'error'
+    );
+  }
+  else {
+    foreach($result as $project){
+      $projects[$project['id']] = $project['name'];
+    }
+  }
+
+  $form['project'] = array(
+    '#title' => t('Backlog Project'),
+    '#type' => 'select',
+    '#options' => $projects,
+    '#description' => t('Select project to add issue when receiving an inquiry'),
+    '#required' => TRUE,
+  );  
+}
+
+
+function backlog_form_submit($form, &$form_state) {
+  // 1258
+
+  global $user;
+  $values = $form_state['values'];
+//  $category = contact_load($values['cid']);
+
+  $options = array(
+    'backlog.createIssue' => array(array(
+      'projectId' => 1258,
+      'summary' => t('!subject : from !name (!mail)', 
+        array('!subject' => $values['subject'], '!name' => $values['name'], '!mail' => $values['mail'] ,)),
+      'description' => $values['message'],
+    )),
+  );
+  $result = xmlrpc(backlog_api_server(), $options);
+  if ($result === FALSE) {
+    drupal_set_message(
+      t('Error return from xmlrpc(): Error: @errno, Message: @message',
+      array('@errno' => xmlrpc_errno(), '@message' => xmlrpc_error_msg())),
+      'error'
+    );
+  }  
+}
+
+
+function backlog_api_server(){
+  $space = variable_get('backlog_space', NULL);
+  $domain = variable_get('backlog_domain', 'backlog.jp');  
+  $user = variable_get('backlog_user', NULL);
+  $password = variable_get('backlog_password', NULL);
+  $api_url = 'https://' . $user . ':' . $password . '@' . $space . '.' . $domain . '/XML-RPC'; 
+  return url($api_url, array('external' => TRUE));
+}
+
+/**
+ * Implement hook_menu().
+ */
+function backlog_menu() {
+  $items = array();
+  $items['admin/config/services/backlog'] = array(
+    'title' => 'Backlog',
+    'description' => 'Configuration for the Backlog module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('backlog_form'),
+    'access arguments' => array('administer users'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;  
+}
+
+function backlog_form($form, &$form_state) {
+  $form['backlog_space'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('backlog_space', NULL),
+    '#title' => t('Backlog Space ID'),
+    '#description' => t('Backlog Space ID'),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+  $form['backlog_domain'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('backlog_domain', 'backlog.jp'),
+    '#title' => t('Backlog Domain'),
+    '#description' => t('Backlog Domain (backlog.jp, backlogtool.com or your package)'),
+    '#size' => 32,
+    '#maxlength' => 32,
+  );  
+  $form['backlog_user'] = array(
+    '#type' => 'textfield',
+    '#default_value' => variable_get('backlog_user', NULL),
+    '#title' => t('Backlog User'),
+    '#description' => t('Backlog User'),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );
+  $form['backlog_password'] = array(
+    '#type' => 'password',
+    '#default_value' => variable_get('backlog_password', NULL),
+    '#title' => t('Backlog Password'),
+    '#description' => t('Backlog Password'),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#required' => TRUE,
+  );    
+  return system_settings_form($form);
+}
+

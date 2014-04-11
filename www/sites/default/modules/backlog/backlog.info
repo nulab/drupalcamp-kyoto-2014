@@ -1,0 +1,6 @@
+name = Backlog
+description = Provides Backlog related functions
+core = 7.x
+package = Nulab
+files[] = backlog.module
+dependencies[] = contact
