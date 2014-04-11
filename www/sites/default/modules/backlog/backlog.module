@@ -59,11 +59,11 @@ function backlog_form_submit($form, &$form_state) {
 
   global $user;
   $values = $form_state['values'];
-//  $category = contact_load($values['cid']);
+  $category = contact_load($values['cid']);
 
   $options = array(
     'backlog.createIssue' => array(array(
-      'projectId' => 1258,
+      'projectId' => (int) $category['project'],
       'summary' => t('!subject : from !name (!mail)', 
         array('!subject' => $values['subject'], '!name' => $values['name'], '!mail' => $values['mail'] ,)),
       'description' => $values['message'],
@@ -78,7 +78,6 @@ function backlog_form_submit($form, &$form_state) {
     );
   }  
 }
-
 
 function backlog_api_server(){
   $space = variable_get('backlog_space', NULL);

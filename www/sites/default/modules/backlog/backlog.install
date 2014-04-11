@@ -5,8 +5,9 @@
  * Install, update and uninstall functions for the Backlog module.
  */
 
-// doesn't work -> https://drupal.org/node/185596#comment-941821
-
+/**
+ * Implements hook_schema_alter().
+ */
 function backlog_schema_alter(&$schema) {
   if (isset($schema['contact'])) {
     $schema['contact']['fields']['project'] = array(
@@ -18,23 +19,20 @@ function backlog_schema_alter(&$schema) {
   }
 }
 
-/*function backlog_install() {
-  $ret = array();
-  $schema['contact'] = array();
-  backlog_schema_alter($schema);
-  foreach ($schema['contact']['fields'] as $name => $spec) {
-    db_add_field($ret, 'contact', $name, $spec);
-  }
-}*/
+/**
+ * Implements hook_install().
+ */
+function backlog_install() {
+  $schema = drupal_get_schema('contact');
+  db_add_field('contact', 'project', $schema['fields']['project']);  
+}
 
-/*function backlog_uninstall() {
-  $ret = array();
-  $schema['contact'] = array();
-  backlog_schema_alter($schema);
-  foreach ($schema['contact']['fields'] as $name => $spec) {
-    db_drop_field($ret, 'contact', $name);
-  }
-}*/
+/**
+ * Implements hook_uninstall().
+ */
+function backlog_uninstall() {
+  db_drop_field('contact', 'project');
+}
 
 /**
  * Implements hook_enable().
