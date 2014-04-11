@@ -20,15 +20,20 @@
         - php5-gd
         - php5-curl
         - language-pack-ja
+        - postfix
+        - mailutils
+      tags: package
     - name: copy screen.rc
       copy: src=files/home/vagrant/.screenrc dest=/home/vagrant/.screenrc owner=vagrant mode=0644
       sudo: no
-    - name: check VBoxGuestAdditions version
-      shell: "[ -d /opt/VBoxGuestAdditions-4.3.10/ ] && echo 1"
-      register: shell_result
-    - name: symlink to VBoxGuestAdditions
-      file: src=/opt/VBoxGuestAdditions-4.3.10/lib/VBoxGuestAdditions dest=/usr/lib/VBoxGuestAdditions state=link
-      when: shell_result.stdout.endswith("1")
+    - name: copy screen.rc
+      copy: src=files/etc/postfix/main.cf dest=/etc/postfix/main.cf
+#    - name: check VBoxGuestAdditions version
+#      shell: "[ -d /opt/VBoxGuestAdditions-4.3.10/ ] && echo 1"
+#      register: shell_result
+#    - name: symlink to VBoxGuestAdditions
+#      file: src=/opt/VBoxGuestAdditions-4.3.10/lib/VBoxGuestAdditions dest=/usr/lib/VBoxGuestAdditions state=link
+#      when: shell_result.stdout.endswith("1")
       # php related
     - name: set apc enabled
       lineinfile: dest=/etc/php5/mods-available/apc.ini insertafter=EOF line="apc.rfc1867 = 1"

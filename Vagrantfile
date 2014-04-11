@@ -10,10 +10,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/raring/current/raring-server-cloudimg-amd64-vagrant-disk1.box"
 #  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.hostname = "kyoto.drupal"
-  config.vm.network "private_network", type: "dhcp"
+  config.vm.network "private_network", ip: "172.28.128.3"
 
   # disabled due to VirtualBox 4.3.10 bug, for details, see https://github.com/mitchellh/vagrant/issues/3341
-#  config.vbguest.auto_update = false
+  config.vbguest.auto_update = false
 
   # VVV style mount
   config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -23,7 +23,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     ansible.playbook = "provision/drupal.yml"
     ansible.sudo = true
     ansible.host_key_checking = false 
-    ansible.tags = ['php']
+    ansible.tags = ['package']
     ansible.verbose = "vv"
   end
 
