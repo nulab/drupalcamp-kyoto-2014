@@ -10,6 +10,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/raring/current/raring-server-cloudimg-amd64-vagrant-disk1.box"
 #  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
   config.vm.hostname = "kyoto.drupal"
+ 
+  # For vagrant share to work, uncomment the following forwarding setting. 
+#  config.vm.network "forwarded_port", guest: 80, host: 8080
   config.vm.network "private_network", ip: "172.28.128.3"
 
   # disabled due to VirtualBox 4.3.10 bug, for details, see https://github.com/mitchellh/vagrant/issues/3341
