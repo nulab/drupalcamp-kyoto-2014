@@ -1,13 +1,24 @@
+# Examples how to integrate Nulab's services to Drupal.
+
+This is an example project to show how to integrate Nulab's services to Drupal. You can see [this presentation slides](https://speakerdeck.com/nulabinc/connecting-nulabs-services-to-drupal) to know the overview of the modules included in this project.
+
+## Source code
+
+You can find some moduels under www/site/default/modules directory. 
+
+* Cacoo Parapara Viewer
+* Typetalk Notifier
+* Backlog Contact Form
+
 # How to start local development environment
 
 ## Prerequisites
 
-You have to install vbguest plugin to update VirtualBox Guest Addition automatically.
-
-    vagrant plugin install vagrant-vbguest
-
-For more details, see [here](http://qiita.com/isaoshimizu/items/e217008b8f6e79eccc85).
+* [Vagrant 1.5 or later](http://docs.vagrantup.com/v2/installation/index.html)
+* [Ansible 1.5 or later](http://docs.ansible.com/intro_installation.html)
 
 ## Start developing environment
 
     vagrant up
+
+After successfully startup, you can open Drupal installation page via http://172.28.128.3/install.php. (IP address is specified in a Vagrant file).
