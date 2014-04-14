@@ -6,9 +6,9 @@ This is an example project to show how to integrate Nulab's services to Drupal. 
 
 You can find some moduels under www/site/default/modules directory. 
 
-* Cacoo Parapara Viewer
-* Typetalk Notifier
-* Backlog Contact Form
+* [Cacoo Parapara Viewer](https://github.com/nulab/drupalcamp-kyoto-2014/tree/master/www/sites/default/modules/cacoo)
+* [Typetalk Notifier](https://github.com/nulab/drupalcamp-kyoto-2014/tree/master/www/sites/default/modules/typetalk)
+* [Backlog Contact Form](https://github.com/nulab/drupalcamp-kyoto-2014/tree/master/www/sites/default/modules/backlog)
 
 # How to start local development environment
 
