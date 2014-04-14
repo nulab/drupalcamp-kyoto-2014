@@ -1,8 +1,0 @@
-name = Single blog
-description = Enables a single blog for an individual or multiple users.
-package = Drupal 7 Development
-core = 7.x
-files[] = single_blog.module
-
-;dependencies[] = autoload
-;php = 5.2
